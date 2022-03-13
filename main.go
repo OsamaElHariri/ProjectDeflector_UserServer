@@ -1,55 +1,55 @@
 package main
 
 import (
-	"context"
-	"fmt"
 	"log"
-	"time"
 
 	"github.com/gofiber/fiber/v2"
-	"go.mongodb.org/mongo-driver/bson"
-	"go.mongodb.org/mongo-driver/mongo"
-	"go.mongodb.org/mongo-driver/mongo/options"
+	"projectdeflector.users/repositories"
 )
 
 func main() {
 	app := fiber.New()
 
-	client, err := mongo.NewClient(options.Client().ApplyURI("mongodb://some_user:password@127.0.0.1:27017"))
-	if err != nil {
-		log.Fatal(err)
-	}
-	ctx, cancelContext := context.WithTimeout(context.Background(), 10*time.Second)
-	err = client.Connect(ctx)
-	if err != nil {
-		log.Fatal(err)
-	}
-	defer cancelContext()
-	defer client.Disconnect(ctx)
+	repo, cleanup := repositories.GetRepository()
+	defer cleanup()
 
-	/*
-	   List databases
-	*/
-	databases, err := client.ListDatabaseNames(ctx, bson.M{})
-	if err != nil {
-		log.Fatal(err)
-	}
-	fmt.Println(databases)
+	app.Get("/status", func(c *fiber.Ctx) error {
 
-	app.Post("/color", func(c *fiber.Ctx) error {
+		return c.JSON(fiber.Map{
+			"status": "ok",
+		})
+	})
+
+	app.Post("/user", func(c *fiber.Ctx) error {
 		payload := struct {
-			PlayerId string `json:"playerId"`
-			Color    string `json:"color"`
+			Uuid string `json:"uuid"`
 		}{}
 
 		if err := c.BodyParser(&payload); err != nil {
 			return c.SendStatus(400)
 		}
 
+		repo.InsertUser(payload.Uuid)
+
 		return c.JSON(fiber.Map{
-			"color": "ok",
+			"uuid": payload.Uuid,
 		})
 	})
 
-	log.Fatal(app.Listen(":3000"))
+	app.Get("/user/:uuid", func(c *fiber.Ctx) error {
+		uuid := c.Params("uuid")
+
+		user, err := repo.FindUser(uuid)
+
+		if err != nil {
+			return c.SendStatus(400)
+		}
+
+		return c.JSON(fiber.Map{
+			"uuid":     user.Uuid,
+			"nickanme": user.Nickname,
+		})
+	})
+
+	log.Fatal(app.Listen(":3005"))
 }
