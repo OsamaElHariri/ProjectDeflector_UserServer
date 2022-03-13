@@ -7,12 +7,11 @@ import (
 
 	"go.mongodb.org/mongo-driver/mongo"
 	"go.mongodb.org/mongo-driver/mongo/options"
-	"projectdeflector.users/users"
 )
 
 type Repository interface {
 	InsertUser(uuid string)
-	FindUser(uuid string) (users.User, error)
+	FindUser(uuid string) (FindUserResult, error)
 }
 
 func GetRepository() (repository Repository, cleanUp func()) {

@@ -5,6 +5,7 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"projectdeflector.users/repositories"
+	"projectdeflector.users/users"
 )
 
 func main() {
@@ -12,9 +13,11 @@ func main() {
 
 	repo, cleanup := repositories.GetRepository()
 	defer cleanup()
+	useCase := users.UseCase{
+		Repo: repo,
+	}
 
 	app.Get("/status", func(c *fiber.Ctx) error {
-
 		return c.JSON(fiber.Map{
 			"status": "ok",
 		})
@@ -29,25 +32,27 @@ func main() {
 			return c.SendStatus(400)
 		}
 
-		repo.InsertUser(payload.Uuid)
+		user, err := useCase.CreateNewAnonymousUser()
+		if err != nil {
+			return c.SendStatus(400)
+		}
 
 		return c.JSON(fiber.Map{
-			"uuid": payload.Uuid,
+			"user": user,
 		})
 	})
 
 	app.Get("/user/:uuid", func(c *fiber.Ctx) error {
 		uuid := c.Params("uuid")
 
-		user, err := repo.FindUser(uuid)
+		user, err := useCase.GetUser(uuid)
 
 		if err != nil {
 			return c.SendStatus(400)
 		}
 
 		return c.JSON(fiber.Map{
-			"uuid":     user.Uuid,
-			"nickanme": user.Nickname,
+			"user": user,
 		})
 	})
 

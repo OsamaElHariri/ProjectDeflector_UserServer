@@ -5,7 +5,6 @@ import (
 
 	"go.mongodb.org/mongo-driver/bson"
 	"go.mongodb.org/mongo-driver/mongo"
-	"projectdeflector.users/users"
 )
 
 type MongoRepository struct {
@@ -19,8 +18,13 @@ func (repo MongoRepository) InsertUser(uuid string) {
 	})
 }
 
-func (repo MongoRepository) FindUser(uuid string) (users.User, error) {
-	var result users.User
+type FindUserResult struct {
+	Uuid     string
+	Nickname string
+}
+
+func (repo MongoRepository) FindUser(uuid string) (FindUserResult, error) {
+	var result FindUserResult
 
 	filter := bson.D{{Key: "uuid", Value: uuid}}
 	repo.client.Database("user_management").Collection("users").CountDocuments(*repo.ctx, filter)
