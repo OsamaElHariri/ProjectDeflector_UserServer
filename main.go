@@ -11,11 +11,7 @@ import (
 func main() {
 	app := fiber.New()
 
-	repo, cleanup := repositories.GetRepository()
-	defer cleanup()
-	useCase := users.UseCase{
-		Repo: repo,
-	}
+	repoFactory := repositories.GetRepositoryFactory()
 
 	app.Get("/status", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
@@ -24,12 +20,13 @@ func main() {
 	})
 
 	app.Post("/user", func(c *fiber.Ctx) error {
-		payload := struct {
-			Uuid string `json:"uuid"`
-		}{}
-
-		if err := c.BodyParser(&payload); err != nil {
+		repo, cleanup, err := repoFactory.GetRepository()
+		defer cleanup()
+		if err != nil {
 			return c.SendStatus(400)
+		}
+		useCase := users.UseCase{
+			Repo: repo,
 		}
 
 		user, err := useCase.CreateNewAnonymousUser()
@@ -42,8 +39,47 @@ func main() {
 		})
 	})
 
+	app.Put("/user/:uuid", func(c *fiber.Ctx) error {
+		uuid := c.Params("uuid")
+
+		payload := struct {
+			Nickname string `json:"nickname"`
+		}{}
+
+		if err := c.BodyParser(&payload); err != nil {
+			return c.SendStatus(400)
+		}
+
+		repo, cleanup, err := repoFactory.GetRepository()
+		defer cleanup()
+		if err != nil {
+			return c.SendStatus(400)
+		}
+		useCase := users.UseCase{
+			Repo: repo,
+		}
+
+		user, err := useCase.UpdateUser(uuid, payload.Nickname)
+		if err != nil {
+			return c.SendStatus(400)
+		}
+
+		return c.JSON(fiber.Map{
+			"user": user,
+		})
+	})
+
 	app.Get("/user/:uuid", func(c *fiber.Ctx) error {
 		uuid := c.Params("uuid")
+
+		repo, cleanup, err := repoFactory.GetRepository()
+		defer cleanup()
+		if err != nil {
+			return c.SendStatus(400)
+		}
+		useCase := users.UseCase{
+			Repo: repo,
+		}
 
 		user, err := useCase.GetUser(uuid)
 

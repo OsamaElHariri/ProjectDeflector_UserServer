@@ -15,6 +15,11 @@ func (useCase UseCase) CreateNewAnonymousUser() (User, error) {
 	return useCase.GetUser(uuid)
 }
 
+func (useCase UseCase) UpdateUser(uuid string, nickname string) (User, error) {
+	useCase.Repo.UpdateUser(uuid, nickname)
+	return useCase.GetUser(uuid)
+}
+
 func (useCase UseCase) GetUser(uuid string) (User, error) {
 	userResult, err := useCase.Repo.FindUser(uuid)
 
@@ -23,7 +28,8 @@ func (useCase UseCase) GetUser(uuid string) (User, error) {
 	}
 
 	user := User{
-		Uuid: userResult.Uuid,
+		Uuid:     userResult.Uuid,
+		Nickname: userResult.Nickname,
 	}
 
 	return user, nil
