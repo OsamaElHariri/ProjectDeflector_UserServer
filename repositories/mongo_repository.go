@@ -52,19 +52,22 @@ type MongoRepository struct {
 	ctx    context.Context
 }
 
-func (repo MongoRepository) InsertUser(uuid string) {
+type DbUser struct {
+	Uuid     string
+	Nickname string
+	Color    string
+}
+
+func (repo MongoRepository) InsertUser(user DbUser) {
 	repo.client.Database("user_management").Collection("users").InsertOne(repo.ctx, bson.D{
-		{Key: "uuid", Value: uuid},
+		{Key: "uuid", Value: user.Uuid},
+		{Key: "nickname", Value: user.Nickname},
+		{Key: "color", Value: user.Color},
 	})
 }
 
-type FindUserResult struct {
-	Uuid     string
-	Nickname string
-}
-
-func (repo MongoRepository) FindUser(uuid string) (FindUserResult, error) {
-	var result FindUserResult
+func (repo MongoRepository) FindUser(uuid string) (DbUser, error) {
+	var result DbUser
 
 	filter := bson.D{{Key: "uuid", Value: uuid}}
 	err := repo.client.Database("user_management").Collection("users").FindOne(repo.ctx, filter).Decode(&result)
@@ -75,22 +78,19 @@ func (repo MongoRepository) FindUser(uuid string) (FindUserResult, error) {
 	return result, nil
 }
 
-type UpdateUserResult struct {
-	Uuid     string
-	Nickname string
-}
-
-func (repo MongoRepository) UpdateUser(uuid string, nickname string) (UpdateUserResult, error) {
-	filter := bson.D{{Key: "uuid", Value: uuid}}
+func (repo MongoRepository) UpdateUser(user DbUser) (DbUser, error) {
+	filter := bson.D{{Key: "uuid", Value: user.Uuid}}
 
 	update := bson.D{{Key: "$set", Value: bson.D{
-		{Key: "uuid", Value: uuid},
-		{Key: "nickname", Value: nickname},
+		{Key: "uuid", Value: user.Uuid},
+		{Key: "nickname", Value: user.Nickname},
+		{Key: "color", Value: user.Color},
 	}}}
 	repo.client.Database("user_management").Collection("users").UpdateOne(repo.ctx, filter, update)
 
-	return UpdateUserResult{
-		Uuid:     uuid,
-		Nickname: nickname,
+	return DbUser{
+		Uuid:     user.Uuid,
+		Nickname: user.Nickname,
+		Color:    user.Color,
 	}, nil
 }

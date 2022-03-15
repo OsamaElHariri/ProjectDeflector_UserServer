@@ -2,6 +2,8 @@ package main
 
 import (
 	"log"
+	"math/rand"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"projectdeflector.users/repositories"
@@ -9,6 +11,7 @@ import (
 )
 
 func main() {
+	rand.Seed(time.Now().UnixNano())
 	app := fiber.New()
 
 	repoFactory := repositories.GetRepositoryFactory()
@@ -43,7 +46,7 @@ func main() {
 		}
 
 		return c.JSON(fiber.Map{
-			"user": user,
+			"user": parseUser(user),
 		})
 	})
 
@@ -53,6 +56,7 @@ func main() {
 
 		payload := struct {
 			Nickname string `json:"nickname"`
+			Color    string `json:"color"`
 		}{}
 
 		if err := c.BodyParser(&payload); err != nil {
@@ -63,13 +67,13 @@ func main() {
 			Repo: repo,
 		}
 
-		user, err := useCase.UpdateUser(uuid, payload.Nickname)
+		user, err := useCase.UpdateUser(uuid, payload.Nickname, payload.Color)
 		if err != nil {
 			return c.SendStatus(400)
 		}
 
 		return c.JSON(fiber.Map{
-			"user": user,
+			"user": parseUser(user),
 		})
 	})
 
@@ -88,7 +92,7 @@ func main() {
 		}
 
 		return c.JSON(fiber.Map{
-			"user": user,
+			"user": parseUser(user),
 		})
 	})
 
