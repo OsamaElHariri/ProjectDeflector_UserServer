@@ -13,6 +13,18 @@ func main() {
 
 	repoFactory := repositories.GetRepositoryFactory()
 
+	app.Use("/", func(c *fiber.Ctx) error {
+		repo, cleanup, err := repoFactory.GetRepository()
+		if err != nil {
+			return c.SendStatus(400)
+		}
+
+		defer cleanup()
+		c.Locals("repo", repo)
+
+		return c.Next()
+	})
+
 	app.Get("/status", func(c *fiber.Ctx) error {
 		return c.JSON(fiber.Map{
 			"status": "ok",
@@ -20,11 +32,7 @@ func main() {
 	})
 
 	app.Post("/user", func(c *fiber.Ctx) error {
-		repo, cleanup, err := repoFactory.GetRepository()
-		defer cleanup()
-		if err != nil {
-			return c.SendStatus(400)
-		}
+		repo := c.Locals("repo").(repositories.Repository)
 		useCase := users.UseCase{
 			Repo: repo,
 		}
@@ -40,6 +48,7 @@ func main() {
 	})
 
 	app.Put("/user/:uuid", func(c *fiber.Ctx) error {
+		repo := c.Locals("repo").(repositories.Repository)
 		uuid := c.Params("uuid")
 
 		payload := struct {
@@ -50,11 +59,6 @@ func main() {
 			return c.SendStatus(400)
 		}
 
-		repo, cleanup, err := repoFactory.GetRepository()
-		defer cleanup()
-		if err != nil {
-			return c.SendStatus(400)
-		}
 		useCase := users.UseCase{
 			Repo: repo,
 		}
@@ -70,13 +74,9 @@ func main() {
 	})
 
 	app.Get("/user/:uuid", func(c *fiber.Ctx) error {
+		repo := c.Locals("repo").(repositories.Repository)
 		uuid := c.Params("uuid")
 
-		repo, cleanup, err := repoFactory.GetRepository()
-		defer cleanup()
-		if err != nil {
-			return c.SendStatus(400)
-		}
 		useCase := users.UseCase{
 			Repo: repo,
 		}
