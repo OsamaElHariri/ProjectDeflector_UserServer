@@ -34,6 +34,39 @@ func main() {
 		})
 	})
 
+	app.Post("/internal/stats/games", func(c *fiber.Ctx) error {
+		payload := struct {
+			Updates []struct {
+				PlayerId string `json:"playerId"`
+				Games    int    `json:"games"`
+				Wins     int    `json:"wins"`
+			} `json:"updates"`
+		}{}
+		if err := c.BodyParser(&payload); err != nil {
+			return c.SendStatus(400)
+		}
+
+		repo := c.Locals("repo").(repositories.Repository)
+		useCase := users.UseCase{
+			Repo: repo,
+		}
+
+		statUpdates := []users.GameStatUpdate{}
+		for i := 0; i < len(payload.Updates); i++ {
+			statUpdates = append(statUpdates, users.GameStatUpdate{
+				PlayerId: payload.Updates[i].PlayerId,
+				Games:    payload.Updates[i].Games,
+				Wins:     payload.Updates[i].Wins,
+			})
+		}
+
+		useCase.UpdateUserStats(statUpdates)
+
+		return c.JSON(fiber.Map{
+			"processing": true,
+		})
+	})
+
 	app.Post("/user", func(c *fiber.Ctx) error {
 		repo := c.Locals("repo").(repositories.Repository)
 		useCase := users.UseCase{
@@ -51,7 +84,6 @@ func main() {
 	})
 
 	app.Put("/user/:uuid", func(c *fiber.Ctx) error {
-		repo := c.Locals("repo").(repositories.Repository)
 		uuid := c.Params("uuid")
 
 		payload := struct {
@@ -63,6 +95,7 @@ func main() {
 			return c.SendStatus(400)
 		}
 
+		repo := c.Locals("repo").(repositories.Repository)
 		useCase := users.UseCase{
 			Repo: repo,
 		}
@@ -78,9 +111,9 @@ func main() {
 	})
 
 	app.Get("/user/:uuid", func(c *fiber.Ctx) error {
-		repo := c.Locals("repo").(repositories.Repository)
 		uuid := c.Params("uuid")
 
+		repo := c.Locals("repo").(repositories.Repository)
 		useCase := users.UseCase{
 			Repo: repo,
 		}

@@ -5,9 +5,10 @@ type RepositoryFactory interface {
 }
 
 type Repository interface {
-	InsertUser(user DbUser)
-	FindUser(uuid string) (DbUser, error)
-	UpdateUser(user DbUser) (DbUser, error)
+	InsertUser(user UserInsertRequest)
+	FindUser(uuid string) (UserResult, error)
+	UpdateUser(user UserInsertRequest) (UserInsertRequest, error)
+	UpdateUserStats(id string, statUpdate DbGameStat) error
 }
 
 func GetRepositoryFactory() RepositoryFactory {

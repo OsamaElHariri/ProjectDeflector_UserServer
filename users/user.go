@@ -1,7 +1,14 @@
 package users
 
+type GameStats struct {
+	Games int
+	Wins  int
+}
+
 type User struct {
-	Uuid     string
-	Nickname string
-	Color    string
+	Id        string
+	Uuid      string
+	Nickname  string
+	Color     string
+	GameStats GameStats
 }

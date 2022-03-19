@@ -14,7 +14,7 @@ func (useCase UseCase) CreateNewAnonymousUser() (User, error) {
 	nickname := getRandomNickname()
 	color := getPlayerColors(uuid, 1)[0]
 
-	dbUser := repositories.DbUser{
+	dbUser := repositories.UserInsertRequest{
 		Uuid:     uuid,
 		Nickname: nickname,
 		Color:    color,
@@ -24,7 +24,7 @@ func (useCase UseCase) CreateNewAnonymousUser() (User, error) {
 }
 
 func (useCase UseCase) UpdateUser(uuid string, nickname string, color string) (User, error) {
-	dbUser := repositories.DbUser{
+	dbUser := repositories.UserInsertRequest{
 		Uuid:     uuid,
 		Nickname: nickname,
 		Color:    color,
@@ -41,10 +41,31 @@ func (useCase UseCase) GetUser(uuid string) (User, error) {
 	}
 
 	user := User{
+		Id:       userResult.Id,
 		Uuid:     userResult.Uuid,
 		Nickname: userResult.Nickname,
 		Color:    userResult.Color,
+		GameStats: GameStats{
+			Games: userResult.GameStats.Games,
+			Wins:  userResult.GameStats.Wins,
+		},
 	}
 
 	return user, nil
+}
+
+type GameStatUpdate struct {
+	PlayerId string
+	Games    int
+	Wins     int
+}
+
+func (useCase UseCase) UpdateUserStats(updates []GameStatUpdate) {
+	for i := 0; i < len(updates); i++ {
+		update := repositories.DbGameStat{
+			Games: updates[i].Games,
+			Wins:  updates[i].Wins,
+		}
+		useCase.Repo.UpdateUserStats(updates[i].PlayerId, update)
+	}
 }
