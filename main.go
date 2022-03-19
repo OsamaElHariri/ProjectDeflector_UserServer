@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"math/rand"
+	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -26,6 +27,31 @@ func main() {
 		c.Locals("repo", repo)
 
 		return c.Next()
+	})
+
+	app.Use("/", func(c *fiber.Ctx) error {
+		userId := c.Get("x-user-id")
+		if userId != "" {
+			c.Locals("userId", userId)
+		}
+		return c.Next()
+	})
+
+	app.Get("/auth/check", func(c *fiber.Ctx) error {
+		auth := c.Get("Authorization")
+		if auth != "" {
+			token := strings.Replace(auth, "Bearer ", "", 1)
+			userId, err := users.UseCase{}.ValidateAccessToken(token)
+			if err != nil {
+				return c.SendStatus(403)
+			}
+			c.Response().Header.Add("x-user-id", userId)
+		} else {
+			return c.SendStatus(403)
+		}
+		return c.JSON(fiber.Map{
+			"status": "auth/check",
+		})
 	})
 
 	app.Get("/status", func(c *fiber.Ctx) error {
@@ -67,7 +93,30 @@ func main() {
 		})
 	})
 
-	app.Post("/user", func(c *fiber.Ctx) error {
+	app.Post("/public/access", func(c *fiber.Ctx) error {
+		payload := struct {
+			Uuid string `json:"uuid"`
+		}{}
+
+		if err := c.BodyParser(&payload); err != nil {
+			return c.SendStatus(400)
+		}
+		repo := c.Locals("repo").(repositories.Repository)
+		useCase := users.UseCase{
+			Repo: repo,
+		}
+
+		token, err := useCase.GetAccessToken(payload.Uuid)
+		if err != nil {
+			return c.SendStatus(400)
+		}
+
+		return c.JSON(fiber.Map{
+			"token": token,
+		})
+	})
+
+	app.Post("/public/user", func(c *fiber.Ctx) error {
 		repo := c.Locals("repo").(repositories.Repository)
 		useCase := users.UseCase{
 			Repo: repo,

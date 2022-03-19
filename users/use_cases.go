@@ -69,3 +69,21 @@ func (useCase UseCase) UpdateUserStats(updates []GameStatUpdate) {
 		useCase.Repo.UpdateUserStats(updates[i].PlayerId, update)
 	}
 }
+
+func (useCase UseCase) GetAccessToken(uuid string) (string, error) {
+	user, err := useCase.Repo.FindUser(uuid)
+	if err != nil {
+		return "", err
+	}
+	return issueJwt(User{
+		Id: user.Id,
+	})
+}
+
+func (useCase UseCase) ValidateAccessToken(token string) (string, error) {
+	info, err := validateJwt(token)
+	if err != nil {
+		return "", err
+	}
+	return info.UserId, nil
+}
