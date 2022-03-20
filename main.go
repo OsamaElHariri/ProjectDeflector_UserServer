@@ -195,5 +195,24 @@ func main() {
 		})
 	})
 
-	log.Fatal(app.Listen(":3005"))
+	app.Get("/user", func(c *fiber.Ctx) error {
+		playerId := c.Locals("userId").(string)
+
+		repo := c.Locals("repo").(repositories.Repository)
+		useCase := users.UseCase{
+			Repo: repo,
+		}
+
+		user, err := useCase.GetUser(playerId)
+
+		if err != nil {
+			return c.SendStatus(400)
+		}
+
+		return c.JSON(fiber.Map{
+			"user": parseUser(user),
+		})
+	})
+
+	log.Fatal(app.Listen(":3006"))
 }

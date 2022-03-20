@@ -11,13 +11,12 @@ type UseCase struct {
 
 func (useCase UseCase) CreateNewAnonymousUser() (string, User, error) {
 	uuid := uuid.NewV4().String()
-	nickname := getRandomNickname()
-	color := getPlayerColors(uuid, 1)[0]
+	randomUser := getRandomUser(uuid)
 
 	dbUser := repositories.UserInsertRequest{
 		Uuid:     uuid,
-		Nickname: nickname,
-		Color:    color,
+		Nickname: randomUser.Nickname,
+		Color:    randomUser.Color,
 	}
 	id, err := useCase.Repo.InsertUser(dbUser)
 	if err != nil {
@@ -27,6 +26,13 @@ func (useCase UseCase) CreateNewAnonymousUser() (string, User, error) {
 	user, err := useCase.GetUser(id)
 
 	return uuid, user, err
+}
+
+func getRandomUser(uuid string) User {
+	return User{
+		Nickname: getRandomNickname(),
+		Color:    getPlayerColors(uuid, 1)[0],
+	}
 }
 
 func (useCase UseCase) UpdateUser(id string, nickname string, color string) (User, error) {
@@ -39,6 +45,12 @@ func (useCase UseCase) UpdateUser(id string, nickname string, color string) (Use
 }
 
 func (useCase UseCase) GetUser(id string) (User, error) {
+	if id == "system" {
+		randomUser := getRandomUser(id)
+		randomUser.Id = id
+		return randomUser, nil
+	}
+
 	userResult, err := useCase.Repo.FindUser(id)
 
 	if err != nil {
