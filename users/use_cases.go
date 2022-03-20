@@ -9,7 +9,7 @@ type UseCase struct {
 	Repo repositories.Repository
 }
 
-func (useCase UseCase) CreateNewAnonymousUser() (User, error) {
+func (useCase UseCase) CreateNewAnonymousUser() (string, User, error) {
 	uuid := uuid.NewV4().String()
 	nickname := getRandomNickname()
 	color := getPlayerColors(uuid, 1)[0]
@@ -19,22 +19,27 @@ func (useCase UseCase) CreateNewAnonymousUser() (User, error) {
 		Nickname: nickname,
 		Color:    color,
 	}
-	useCase.Repo.InsertUser(dbUser)
-	return useCase.GetUser(uuid)
+	id, err := useCase.Repo.InsertUser(dbUser)
+	if err != nil {
+		return "", User{}, err
+	}
+
+	user, err := useCase.GetUser(id)
+
+	return uuid, user, err
 }
 
-func (useCase UseCase) UpdateUser(uuid string, nickname string, color string) (User, error) {
-	dbUser := repositories.UserInsertRequest{
-		Uuid:     uuid,
+func (useCase UseCase) UpdateUser(id string, nickname string, color string) (User, error) {
+	dbUser := repositories.UserUpdateRequest{
 		Nickname: nickname,
 		Color:    color,
 	}
-	useCase.Repo.UpdateUser(dbUser)
-	return useCase.GetUser(uuid)
+	useCase.Repo.UpdateUser(id, dbUser)
+	return useCase.GetUser(id)
 }
 
-func (useCase UseCase) GetUser(uuid string) (User, error) {
-	userResult, err := useCase.Repo.FindUser(uuid)
+func (useCase UseCase) GetUser(id string) (User, error) {
+	userResult, err := useCase.Repo.FindUser(id)
 
 	if err != nil {
 		return User{}, err
@@ -42,7 +47,6 @@ func (useCase UseCase) GetUser(uuid string) (User, error) {
 
 	user := User{
 		Id:       userResult.Id,
-		Uuid:     userResult.Uuid,
 		Nickname: userResult.Nickname,
 		Color:    userResult.Color,
 		GameStats: GameStats{
@@ -71,7 +75,7 @@ func (useCase UseCase) UpdateUserStats(updates []GameStatUpdate) {
 }
 
 func (useCase UseCase) GetAccessToken(uuid string) (string, error) {
-	user, err := useCase.Repo.FindUser(uuid)
+	user, err := useCase.Repo.FindUserByUuid(uuid)
 	if err != nil {
 		return "", err
 	}

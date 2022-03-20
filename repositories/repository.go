@@ -5,9 +5,10 @@ type RepositoryFactory interface {
 }
 
 type Repository interface {
-	InsertUser(user UserInsertRequest)
+	InsertUser(user UserInsertRequest) (string, error)
+	FindUserByUuid(uuid string) (UserResult, error)
 	FindUser(uuid string) (UserResult, error)
-	UpdateUser(user UserInsertRequest) (UserInsertRequest, error)
+	UpdateUser(id string, user UserUpdateRequest) (UserUpdateRequest, error)
 	UpdateUserStats(id string, statUpdate DbGameStat) error
 }
 

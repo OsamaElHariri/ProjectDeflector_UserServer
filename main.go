@@ -138,18 +138,19 @@ func main() {
 			Repo: repo,
 		}
 
-		user, err := useCase.CreateNewAnonymousUser()
+		uuid, user, err := useCase.CreateNewAnonymousUser()
 		if err != nil {
 			return c.SendStatus(400)
 		}
 
 		return c.JSON(fiber.Map{
+			"uuid": uuid,
 			"user": parseUser(user),
 		})
 	})
 
-	app.Put("/user/:uuid", func(c *fiber.Ctx) error {
-		uuid := c.Params("uuid")
+	app.Put("/user", func(c *fiber.Ctx) error {
+		playerId := c.Locals("userId").(string)
 
 		payload := struct {
 			Nickname string `json:"nickname"`
@@ -165,7 +166,7 @@ func main() {
 			Repo: repo,
 		}
 
-		user, err := useCase.UpdateUser(uuid, payload.Nickname, payload.Color)
+		user, err := useCase.UpdateUser(playerId, payload.Nickname, payload.Color)
 		if err != nil {
 			return c.SendStatus(400)
 		}
@@ -175,15 +176,15 @@ func main() {
 		})
 	})
 
-	app.Get("/user/:uuid", func(c *fiber.Ctx) error {
-		uuid := c.Params("uuid")
+	app.Get("/user/:id", func(c *fiber.Ctx) error {
+		id := c.Params("id")
 
 		repo := c.Locals("repo").(repositories.Repository)
 		useCase := users.UseCase{
 			Repo: repo,
 		}
 
-		user, err := useCase.GetUser(uuid)
+		user, err := useCase.GetUser(id)
 
 		if err != nil {
 			return c.SendStatus(400)

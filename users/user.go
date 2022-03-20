@@ -7,7 +7,6 @@ type GameStats struct {
 
 type User struct {
 	Id        string
-	Uuid      string
 	Nickname  string
 	Color     string
 	GameStats GameStats

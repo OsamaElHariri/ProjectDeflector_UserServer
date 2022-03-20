@@ -4,7 +4,6 @@ import "projectdeflector.users/users"
 
 type User struct {
 	Id        string    `json:"id"`
-	Uuid      string    `json:"uuid"`
 	Nickname  string    `json:"nickname"`
 	Color     string    `json:"color"`
 	GameStats GameStats `json:"gameStats"`
@@ -18,7 +17,6 @@ type GameStats struct {
 func parseUser(user users.User) User {
 	return User{
 		Id:       user.Id,
-		Uuid:     user.Uuid,
 		Nickname: user.Nickname,
 		Color:    user.Color,
 		GameStats: GameStats{
