@@ -37,6 +37,22 @@ func main() {
 		return c.Next()
 	})
 
+	app.Get("/internal/auth/check", func(c *fiber.Ctx) error {
+		auth := c.Get("Authorization")
+		if auth != "" {
+			token := strings.Replace(auth, "Bearer ", "", 1)
+			secretInternalToken := "SecretInternalToken!"
+			if token != secretInternalToken {
+				return c.SendStatus(403)
+			}
+		} else {
+			return c.SendStatus(403)
+		}
+		return c.JSON(fiber.Map{
+			"status": "ok",
+		})
+	})
+
 	app.Get("/auth/check", func(c *fiber.Ctx) error {
 		auth := c.Get("Authorization")
 		if auth != "" {
@@ -50,7 +66,7 @@ func main() {
 			return c.SendStatus(403)
 		}
 		return c.JSON(fiber.Map{
-			"status": "auth/check",
+			"status": "ok",
 		})
 	})
 
