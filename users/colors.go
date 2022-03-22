@@ -10,17 +10,27 @@ import (
 )
 
 func getPlayerColors(playerId string, colorCount int) []string {
-
 	hashGen := md5.New()
-	hash := hashGen.Sum([]byte(playerId + time.Now().Format("YYYY-MM-DD")))
-
-	var seed uint64 = binary.BigEndian.Uint64(hash)
+	hashGen.Write([]byte(playerId + time.Now().Format("Jan 2 2006")))
+	var seed uint64 = binary.BigEndian.Uint64(hashGen.Sum(nil))
 	rand.Seed(int64(seed))
 
 	colors := make([]string, colorCount)
 	for i := 0; i < colorCount; i++ {
-		color := colorful.Hcl(rand.Float64()*360.0, 90/150.0, 0.6+rand.Float64()*0.4)
+		color := getValidColor()
 		colors[i] = color.Hex()
 	}
 	return colors
+}
+
+func getValidColor() (c colorful.Color) {
+	for c = getColor(); !c.IsValid(); c = getColor() {
+	}
+	return c
+}
+
+func getColor() colorful.Color {
+	return colorful.Hcl(rand.Float64()*360.0,
+		0.4+rand.Float64()*0.4,
+		0.4+rand.Float64()*0.2)
 }
