@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/gofiber/fiber/v2/middleware/recover"
 	"projectdeflector.users/repositories"
 	"projectdeflector.users/users"
 )
@@ -14,6 +15,7 @@ import (
 func main() {
 	rand.Seed(time.Now().UnixNano())
 	app := fiber.New()
+	app.Use(recover.New())
 
 	repoFactory := repositories.GetRepositoryFactory()
 
