@@ -103,3 +103,12 @@ func (useCase UseCase) ValidateAccessToken(token string) (string, error) {
 	}
 	return info.UserId, nil
 }
+
+func (useCase UseCase) GetUserColors(id string) ([]string, error) {
+	user, err := useCase.Repo.FindUser(id)
+	if err != nil {
+		return nil, err
+	}
+	colors := getPlayerColors(user.Uuid, 4)
+	return colors, nil
+}

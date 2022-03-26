@@ -216,5 +216,23 @@ func main() {
 		})
 	})
 
+	app.Get("/colors", func(c *fiber.Ctx) error {
+		playerId := c.Locals("userId").(string)
+
+		repo := c.Locals("repo").(repositories.Repository)
+		useCase := users.UseCase{
+			Repo: repo,
+		}
+		colors, err := useCase.GetUserColors(playerId)
+
+		if err != nil {
+			return c.SendStatus(400)
+		}
+
+		return c.JSON(fiber.Map{
+			"colors": colors,
+		})
+	})
+
 	log.Fatal(app.Listen(":3006"))
 }
