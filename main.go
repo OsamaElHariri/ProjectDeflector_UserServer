@@ -3,16 +3,27 @@ package main
 import (
 	"log"
 	"math/rand"
+	"os"
 	"strings"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/gofiber/fiber/v2/middleware/recover"
+	"github.com/joho/godotenv"
 	"projectdeflector.users/repositories"
 	"projectdeflector.users/users"
 )
 
 func main() {
+	env := os.Getenv("ENV")
+	if env == "" {
+		env = "local"
+	}
+	err := godotenv.Load("env/." + env + ".env")
+	if err != nil {
+		log.Fatalf("could not load env vars")
+	}
+
 	rand.Seed(time.Now().UnixNano())
 	app := fiber.New()
 	app.Use(recover.New())
@@ -43,7 +54,7 @@ func main() {
 		auth := c.Get("Authorization")
 		if auth != "" {
 			token := strings.Replace(auth, "Bearer ", "", 1)
-			secretInternalToken := "SecretInternalToken!"
+			secretInternalToken := os.Getenv("INTERNAL_TOKEN")
 			if token != secretInternalToken {
 				return c.SendStatus(403)
 			}

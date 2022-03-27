@@ -2,6 +2,7 @@ package users
 
 import (
 	"errors"
+	"os"
 	"time"
 
 	"github.com/golang-jwt/jwt"
@@ -17,7 +18,7 @@ func issueJwt(user User) (string, error) {
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
 
-	encypted, err := token.SignedString([]byte("SuperSecretText!!"))
+	encypted, err := token.SignedString([]byte(os.Getenv("JWT_SECRET")))
 	if err != nil {
 		return "", nil
 	}
@@ -34,7 +35,7 @@ func validateJwt(tokenToValidate string) (AccessInfo, error) {
 		tokenToValidate,
 		&jwt.StandardClaims{},
 		func(token *jwt.Token) (interface{}, error) {
-			return []byte("SuperSecretText!!"), nil
+			return []byte(os.Getenv("JWT_SECRET")), nil
 		},
 	)
 	if err != nil {
